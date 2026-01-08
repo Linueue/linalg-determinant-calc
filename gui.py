@@ -1,23 +1,27 @@
 import tkinter as tk
-from tkinter import ttk
-import sys
+import customtkinter as ctk
 
-FONT = ("Consolas", )
+FONT_NAME = ("Consolas", "Menlo", "Arial")
 
-class Window(tk.Frame):
-    def __init__(self, parent):
-        super().__init__(parent)
-        label = ttk.Label(self, text="Determinant Calculator")
-        label.pack()
-        label.bind("<1>", self.quit)
+class App(ctk.CTk):
+    def __init__(self):
+        super().__init__()
+        self.geometry("800x600")
 
-    def quit(self, _=None):
-        sys.exit()
+        self.frame = ctk.CTkFrame(self)
+        self.frame.pack(expand=True, fill="both")
+        self.font = ctk.CTkFont(
+            family=FONT_NAME,
+            size=16,
+        )
 
-root = tk.Tk()
-root.tk.call("tk", "scaling", 1.25)
-style = ttk.Style()
-root.geometry("800x600")
-style.configure("TLabel", font=(*FONT, 25))
-Window(root).pack()
-root.mainloop()
+        self.build_ui()
+
+    def build_ui(self):
+        self.font.configure(size=20)
+        label = ctk.CTkLabel(self.frame, text="Determinant Calculator", font=self.font)
+        label.pack(padx=20, pady=20)
+
+app = App()
+# root.tk.call("tk", "scaling", 1.25)
+app.mainloop()
