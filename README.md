@@ -8,7 +8,13 @@
 git clone https://github.com/Linueue/linalg-determinant-calc.git
 ```
 
-2. Run it
+2. Install the dependencies
+
+```
+pip install -r requirements.txt
+```
+
+3. Run it
 
 ```
 python determinant.py (--test) # optional
