@@ -1,7 +1,10 @@
 import tkinter as tk
 import customtkinter as ctk
+import numpy as np
+from determinant import determinant_cofactor
 
-FONT_NAME = "Arial"
+FONT_NAME = "TkDefaultFont"
+MAX_MATRIX_SIZE = 10
 
 class App(ctk.CTk):
     def __init__(self):
@@ -24,26 +27,32 @@ class App(ctk.CTk):
         self.matrix_size = 3
         self.entries = []
 
+        print(tk.font.families())
+
         self.build_ui()
 
     def num_callback(self, P):
         return P.isdigit() or P == "" or (P.count("/") == 1) or (P.count(".") == 1)
 
-    def on_size_change(self, sv):
-        if not sv.get():
+    def focus_next_entry(self, i, j):
+        next_i = i
+        next_j = j + 1
+        if next_j % self.matrix_size == 0:
+            next_i += 1
+            next_j = 0
+
+        if next_i >= self.matrix_size:
             return
 
-        self.matrix_size = int(sv.get())
+        self.entries[next_i][next_j].focus_set()
 
+    def build_matrix(self):
         vcmd = (self.register(self.num_callback), "%P")
 
-        for entry in self.matrix_frame.winfo_children():
-            entry.destroy()
+        for i in range(MAX_MATRIX_SIZE):
+            entries = []
 
-        self.entries.clear()
-        
-        for i in range(self.matrix_size):
-            for j in range(self.matrix_size):
+            for j in range(MAX_MATRIX_SIZE):
                 entry = ctk.CTkEntry(
                     self.matrix_frame,
                     width=50,
@@ -51,8 +60,65 @@ class App(ctk.CTk):
                     validatecommand=vcmd,
                 )
                 entry.grid(row=i, column=j, padx=5, pady=5)
+                entry.bind("<Return>", lambda e, i=i, j=j: self.focus_next_entry(i, j))
                 entry.insert(0, "0")
-                self.entries.append(entry)
+                entries.append(entry)
+
+            self.entries.append(entries)
+
+    def on_size_change(self, sv):
+        if not sv.get():
+            return
+
+        self.matrix_size = int(sv.get())
+        
+        for i in range(MAX_MATRIX_SIZE):
+            for j in range(MAX_MATRIX_SIZE):
+                if i >= self.matrix_size or j >= self.matrix_size:
+                    self.entries[i][j].delete(0, "end")
+                    self.entries[i][j].insert(0, "0")
+                    self.entries[i][j].grid_forget()
+                    continue
+                self.entries[i][j].grid(row=i, column=j, padx=5, pady=5)
+    
+    def parse(self, v):
+        a = ""
+        b = ""
+
+        is_fraction = False
+
+        for c in v:
+            if is_fraction:
+                b += c
+                continue
+            if c == "/":
+                is_fraction = True
+                continue
+            a += c
+
+        if is_fraction:
+            return float(a) / float(b)
+
+        return a
+
+    def calculate(self):
+        n = self.matrix_size
+        mat = np.identity(n)
+
+        for i in range(n):
+            for j in range(n):
+                value = self.entries[i][j].get()
+
+                if not value or (value and value[-1] == "/"):
+                    print("ERROR - HANDLE THIS")
+                    return
+
+                mat[i, j] = self.parse(value)
+
+        det = determinant_cofactor(mat)
+
+        print(mat)
+        print(det)
 
     def build_ui(self):
         label = ctk.CTkLabel(
@@ -110,9 +176,19 @@ class App(ctk.CTk):
             input_frame,
             fg_color="transparent"
         )
-        self.matrix_frame.grid(row=1, columnspan=10, padx=10, pady=(0, 10), sticky="nsew")
+        self.matrix_frame.grid(row=1, columnspan=10, padx=10, pady=(0, 10), sticky="n")
+        self.build_matrix()
 
         size_input.insert(0, "3")
+
+        button = ctk.CTkButton(
+            input_frame,
+            text="Calculate",
+            width=100,
+            font=self.font,
+            command=self.calculate,
+        )
+        button.grid(row=2, columnspan=10, padx=10, pady=10, ipadx=10, ipady=5, sticky="n")
 
 app = App()
 app.mainloop()
